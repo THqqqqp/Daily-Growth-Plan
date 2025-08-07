@@ -9,7 +9,7 @@
     <ProgressTracker />
     <TodayTasks />
     <DailyInspiration />
-    <PracticeRecord />
+    <!-- <PracticeRecord /> -->
     <LabelingDrill />
     <EmotionReflection />
     <ExpressionTemplate />
