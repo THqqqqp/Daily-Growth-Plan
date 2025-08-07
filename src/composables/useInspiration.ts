@@ -1,10 +1,25 @@
-// useInspiration.ts: 根据日期提供每日灵感
-import { computed } from 'vue'
-import { inspirations } from '../utils/constants'
-import { useDate } from './useDate'
+// useInspiration.ts: 通过 LLM 获取每日灵感
+import { ref, onMounted } from 'vue'
+import { useLLM } from './useLLM'
 
 export function useInspiration() {
-  const { dayIndex } = useDate()
-  const dailyInspiration = computed(() => inspirations[dayIndex.value % inspirations.length])
-  return { dailyInspiration }
+  const dailyInspiration = ref({ text: '', source: '' })
+  const { generateInspiration } = useLLM()
+
+  async function loadInspiration() {
+    const result = await generateInspiration()
+    try {
+      const parsed = typeof result === 'string' ? JSON.parse(result) : result
+      dailyInspiration.value = {
+        text: parsed.text || '',
+        source: parsed.source || ''
+      }
+    } catch (e) {
+      dailyInspiration.value = { text: result?.text || result || '', source: result?.source || '' }
+    }
+  }
+
+  onMounted(loadInspiration)
+
+  return { dailyInspiration, loadInspiration }
 }
