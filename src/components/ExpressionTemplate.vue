@@ -16,25 +16,29 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { templates } from '../utils/constants'
-import { useDate } from '../composables/useDate'
+import { ref, onMounted } from 'vue'
 import { useStorage } from '../composables/useStorage'
 import { useStreak } from '../composables/useStreak'
 import { useTasks } from '../composables/useTasks'
+import { useLLM } from '../composables/useLLM'
 
-const { dayIndex } = useDate()
-const currentTemplate = computed(() => templates[dayIndex.value % templates.length])
-
+const currentTemplate = ref<{ template: string; example: string }>({ template: '', example: '' })
 const templatePractice = ref('')
 
 const { loadData, saveData } = useStorage()
 const { updateProgress, streakDays, totalSessions } = useStreak()
 const { todayTasks, completionRate } = useTasks()
+const { generateTemplate } = useLLM()
 
-onMounted(() => {
+onMounted(async () => {
   const data = loadData()
   templatePractice.value = data.templatePractice || ''
+  const result = await generateTemplate()
+  try {
+    currentTemplate.value = JSON.parse(result)
+  } catch {
+    currentTemplate.value = { template: result, example: '' }
+  }
 })
 
 function saveTemplatePractice(event: Event) {

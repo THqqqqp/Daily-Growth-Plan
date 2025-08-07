@@ -2,7 +2,7 @@
 <template>
   <section>
     <h2 class="text-lg font-bold mb-2">标注练习</h2>
-    <p class="mb-2">{{ currentScenario.text }}</p>
+    <p class="mb-2">{{ currentScenario }}</p>
     <div class="flex flex-wrap gap-2 mb-2">
       <button
         v-for="emotion in emotions"
@@ -25,15 +25,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { emotions, scenarios } from '../utils/constants'
-import { useDate } from '../composables/useDate'
+import { ref, onMounted } from 'vue'
+import { emotions } from '../utils/constants'
 import { useStorage } from '../composables/useStorage'
 import { useStreak } from '../composables/useStreak'
 import { useTasks } from '../composables/useTasks'
+import { useLLM } from '../composables/useLLM'
 
-const { dayIndex } = useDate()
-const currentScenario = computed(() => scenarios[dayIndex.value % scenarios.length])
+const currentScenario = ref('')
+const { generateScenario } = useLLM()
 
 const selectedEmotion = ref('')
 const emotionExplanation = ref('')
@@ -42,10 +42,11 @@ const { loadData, saveData } = useStorage()
 const { updateProgress, streakDays, totalSessions } = useStreak()
 const { todayTasks, completionRate } = useTasks()
 
-onMounted(() => {
+onMounted(async () => {
   const data = loadData()
   selectedEmotion.value = data.selectedEmotion || ''
   emotionExplanation.value = data.emotionExplanation || ''
+  currentScenario.value = await generateScenario('简短的情绪场景')
 })
 
 function selectEmotion(emotion: string) {
